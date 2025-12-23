@@ -1,7 +1,7 @@
 <?php
 
-require ('seo-board_options.php');
-include ('./lang/eng.php');
+require_once __DIR__ . '/seo-board_options.php';
+include_once __DIR__ . '/lang/eng.php';
 
 error_reporting(E_ALL);
 set_magic_quotes_runtime(0);
@@ -28,7 +28,7 @@ forum_numreplies int(10) unsigned NOT NULL DEFAULT '0',
 forum_lastpost_time int(10) unsigned NOT NULL DEFAULT '0',
 forum_lastposter char(30) NOT NULL DEFAULT '',
 PRIMARY KEY (forum_id)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 
 $q[] = "DROP TABLE IF EXISTS {$dbpref}users";
@@ -37,7 +37,7 @@ user_id int(10) unsigned NOT NULL auto_increment,
 user_name varchar(20) NOT NULL DEFAULT '',
 user_pass char(40) NOT NULL DEFAULT '',
 user_regdate int(10) unsigned NOT NULL DEFAULT '0',
-user_bio text NOT NULL DEFAULT '',
+user_bio text NOT NULL,
 user_bio_status tinyint(2) unsigned NOT NULL DEFAULT '5',
 user_timezone float(3,1) NOT NULL DEFAULT '0.0',
 user_email varchar(100) NOT NULL DEFAULT '',
@@ -48,13 +48,13 @@ user_lasttimereadpost int(10) unsigned NOT NULL DEFAULT '0',
 user_lastsession int(10) unsigned NOT NULL DEFAULT '0',
 user_banned tinyint(1) unsigned NOT NULL DEFAULT '0',
 user_newpassword char(40) NOT NULL DEFAULT '',
-user_signature text NOT NULL DEFAULT '',
+user_signature text NOT NULL,
 user_signature_status tinyint(2) unsigned NOT NULL DEFAULT '5',
 user_view_signatures tinyint(1) unsigned NOT NULL DEFAULT '1',
 user_avatar varchar(150) NOT NULL DEFAULT '',
 user_view_avatars tinyint(1) unsigned NOT NULL DEFAULT '1',
 PRIMARY KEY (user_id)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 
 $q[] = "DROP TABLE IF EXISTS {$dbpref}topics";
@@ -76,7 +76,7 @@ forum_id int(10) unsigned NOT NULL DEFAULT '0',
 PRIMARY KEY (topic_id),
 KEY (forum_id),
 KEY (topic_lastpost_time)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 $q[] = "DROP TABLE IF EXISTS {$dbpref}posts";
 $q[] = "CREATE TABLE {$dbpref}posts(
@@ -84,8 +84,8 @@ post_id int(10) unsigned NOT NULL auto_increment,
 topic_id int(10) unsigned NOT NULL DEFAULT '0',
 post_author varchar(30) DEFAULT 'Anonymous' NOT NULL,
 post_author_id int(10) unsigned NOT NULL DEFAULT '0',
-post_author_ip varchar(15) NOT NULL default 'Unknown',
-post_text text NOT NULL DEFAULT '',
+post_author_ip varchar(45) NOT NULL default 'Unknown',
+post_text text NOT NULL,
 post_text_status tinyint(2) unsigned NOT NULL DEFAULT '5',
 post_time int(10) unsigned NOT NULL DEFAULT '0',
 post_edited tinyint(1) unsigned DEFAULT '0',
@@ -95,16 +95,16 @@ PRIMARY KEY (post_id),
 KEY (topic_id),
 KEY (post_time),
 FULLTEXT (post_text)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 $q[] = "DROP TABLE IF EXISTS {$dbpref}search";
 $q[] = "CREATE TABLE {$dbpref}search(
 search_id int(10) unsigned NOT NULL auto_increment,
 search_user_id int(10) unsigned NOT NULL DEFAULT '0',
 search_time int(10) unsigned NOT NULL DEFAULT '0',
-search_results text NOT NULL DEFAULT '',
+search_results text NOT NULL,
 PRIMARY KEY(search_id)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 $q[] = "DROP TABLE IF EXISTS {$dbpref}bans";
 $q[] = "CREATE TABLE {$dbpref}bans(
@@ -112,7 +112,7 @@ ban_id int(10) unsigned NOT NULL auto_increment,
 ban_data char(20) NOT NULL DEFAULT '',
 PRIMARY KEY(ban_id),
 UNIQUE KEY(ban_data)
-) TYPE=MyISAM;";
+ ) ENGINE=MyISAM DEFAULT CHARSET=utf8;";
 
 //create tables
 foreach ($q as $query)

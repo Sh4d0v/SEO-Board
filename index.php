@@ -38,9 +38,17 @@ foreach ($_COOKIE as $var=>$val)
     $$var = trim($val);
 }
 
-require ('seo-board_options.php');
-require ('./code/skinning.php');
-require ("./lang/$lang.php");
+require_once __DIR__ . '/seo-board_options.php';
+require_once __DIR__ . '/code/skinning.php';
+// validate $lang and include language file safely (fallback to 'eng')
+if (empty($lang) || !preg_match('/^[A-Za-z0-9_-]+$/', $lang)) {
+  $lang = 'eng';
+}
+$lang_file = __DIR__ . '/lang/' . $lang . '.php';
+if (!file_exists($lang_file)) {
+  $lang_file = __DIR__ . '/lang/eng.php';
+}
+require_once $lang_file;
 
 if ($enablegzip == 1)
   ob_start('ob_gzhandler');

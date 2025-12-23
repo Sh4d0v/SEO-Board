@@ -5,12 +5,19 @@ if(!defined('SEO-BOARD'))
   die($lang['fatal_error']);
 }
 
-require ('smilies/smilies.php');
+require_once __DIR__ . '/smilies/smilies.php';
 
-if (!isset($m) || !is_numeric($m))
+// validate member id as integer (prevent injection / unexpected values)
+if (!isset($m) || !filter_var($m, FILTER_VALIDATE_INT)) {
   die($lang['fatal_error']);
+}
+$m = (int) $m;
+if ($m <= 0) {
+  die($lang['fatal_error']);
+}
 
-$result = mysql_query("SELECT user_name, user_regdate, user_bio, user_bio_status, user_email, user_email_public, user_allowviewonline, user_numposts, user_lasttimereadpost FROM {$dbpref}users WHERE user_id='$m'");
+$user_id_to_query = intval($m);
+$result = mysql_query("SELECT user_name, user_regdate, user_bio, user_bio_status, user_email, user_email_public, user_allowviewonline, user_numposts, user_lasttimereadpost FROM {$dbpref}users WHERE user_id='{$user_id_to_query}'");
 if (mysql_num_rows($result)!=1)
 {
   $title = $forumtitle.' &raquo; '.$lang['member_profile'];
@@ -21,7 +28,7 @@ else
 {
   list($member_name, $member_regdate, $member_bio, $member_bio_status, $member_email, $member_email_public, $member_allowviewonline, $member_numposts, $member_lasttimereadpost) = mysql_fetch_row($result);
   $title = $forumtitle.' &raquo; '.$lang['member_profile'].' &raquo; '.$member_name;
-  require('forumheader.php');
+  require_once __DIR__ . '/forumheader.php';
 
   if ($member_email_public == 0)
     $member_email = null;
@@ -41,7 +48,10 @@ else
   $member_numposts = sprintf($lang['posts_per_day'], $member_numposts, $ppd);
   
   $member_regdate = format_datetime($member_regdate, $user_timezone);
-  $find_member_topics = '<a href="'.$forumscript.'?a=search&amp;s=&amp;postsby=&amp;postauthor='.htmlentities(urlencode($member_name)).'">'.sprintf($lang['member_topics'],$member_name).'</a>';
+  // build safe link: rawurlencode for URL, htmlspecialchars for displayed text
+  $safe_forumscript = htmlspecialchars($forumscript, ENT_QUOTES, 'UTF-8');
+  $safe_member_name_text = htmlspecialchars($member_name, ENT_QUOTES, 'UTF-8');
+  $find_member_topics = '<a href="'.$safe_forumscript.'?a=search&amp;s=&amp;postsby=&amp;postauthor='.rawurlencode($member_name).'">'.sprintf($lang['member_topics'], $safe_member_name_text).'</a>';
   print eval(get_template('memberprofile'));  
 }
 ?>

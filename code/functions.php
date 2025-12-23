@@ -38,7 +38,8 @@ function array_add_slashes(&$array)
 function format_html($text)
 {
   global $lang;
-  return str_replace('&amp;#', '&#', htmlspecialchars($text, ENT_QUOTES));
+  // explicit UTF-8 charset to avoid relying on default encoding
+  return str_replace('&amp;#', '&#', htmlspecialchars($text, ENT_QUOTES, 'UTF-8'));
 }
 
 function trunc_url_title($url, $maxchars = 70)
@@ -67,33 +68,29 @@ function format_bbcodes($text)
   '<strong>','</strong>','<strong>','</strong>','<em>','</em>','<em>','</em>','<u>','</u>','<u>','</u>');
   
   $text = str_replace($search, $replace, $text);
+  // images and email (simple replacements)
+  $text = preg_replace('#\[img\](http|https|ftp)://(.*?)\[/img\]#i', '<img src="$1://$2" alt="$1://$2">', $text);
+  $text = preg_replace('#\[email\](.*?)\[/email\]#i', '<a href="mailto:$1">$1</a>', $text);
+  $text = preg_replace('#\[email=(.*?)\](.*?)\[/email\]#i', '<a href="mailto:$1">$2</a>', $text);
 
-  $search = array(
-  '#\[img\](http|https|ftp)://(.*?)\[/img\]#i',
-  '#\[email\](.*?)\[/email\]#i',
-  '#\[email=(.*?)\](.*?)\[/email\]#i',  
-  '#\[url=(http|https|ftp)://(.+?)\](.+?)\[/url\]#ie',
-  '#\[url\](http|https|ftp)://(.+?)\[/url\]#ie',
-  '#\[code\]#i',
-  '#\[/code\]#i',
-  '#\[quote\]#i',
-  '#\[quote=(.*?)\]#i',
-  '#\[/quote\]#i'
-  );
-  $replace = array(
-  '<img src="\\1://\\2" alt="\\1://\\2">',
-  '<a href="mailto:\\1">\\1</a>',
-  '<a href="mailto:\\1">\\2</a>',
-  'trunc_url(\'\\1://\\2\',\'\\3\')',
-  'trunc_url(\'\\1://\\2\',\'\\1://\\2\')',
-  '<div class="code"><b>'.$lang['code'].': </b><br><br>',
-  '</div>',
-  '<div class="quote"><b>'.$lang['quote'].': </b><br>',
-  '<div class="quote"><b>'.$lang['quoting'].' \\1</b><br>',
-  '</div>'
-  );
-  
-  return preg_replace($search, $replace, $text);
+  // URL tags need callbacks (the old /e modifier executed PHP and is removed in modern PHP)
+  $text = preg_replace_callback('#\[url=(http|https|ftp)://(.+?)\](.+?)\[/url\]#i', function($m) {
+    return trunc_url($m[1].'://'.$m[2], $m[3]);
+  }, $text);
+  $text = preg_replace_callback('#\[url\](http|https|ftp)://(.+?)\[/url\]#i', function($m) {
+    return trunc_url($m[1].'://'.$m[2], $m[1].'://'.$m[2]);
+  }, $text);
+
+  // code and quote blocks
+  $text = preg_replace('#\[code\]#i', '<div class="code"><b>'. $lang['code'] .': </b><br><br>', $text);
+  $text = preg_replace('#\[/code\]#i', '</div>', $text);
+  $text = preg_replace('#\[quote\]#i', '<div class="quote"><b>'. $lang['quote'] .': </b><br>', $text);
+  $text = preg_replace_callback('#\[quote=(.*?)\]#i', function($m) use ($lang) {
+    return '<div class="quote"><b>'. sprintf($lang['quoting'], $m[1]) .'</b><br>';
+  }, $text);
+  $text = preg_replace('#\[/quote\]#i', '</div>', $text);
+
+  return $text;
 }
 
 function makeURLs($text)
@@ -237,7 +234,7 @@ function validate_text($text, $checkbbcodes = true)
     //validate tags with '=' (example: [url=http://www.seobb.com]..)
     if ((count($temp_arr2) > 1) && (!in_array($tag, $tags2)))
       continue;
-    if ($tag{0} != '/')
+    if ($tag[0] != '/')
 	{
 	  array_push($stack, $tag);
 	  continue;
